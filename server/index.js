@@ -2,6 +2,7 @@
 import express from "express";
 import morgan from "morgan";
 import cors from "cors";
+import { getAllStations, getAllSegments } from "./dao.js";
 
 // init express
 const app = new express();
@@ -27,6 +28,30 @@ app.get("/api/test", (req, res) => {
   });
 });
 
+
+// Temporary debug API for Section 3.
+// This confirms that dao.js can read stations from the SQLite database.
+app.get("/api/debug/stations", async (req, res) => {
+  try {
+    const stations = await getAllStations();
+    res.json(stations);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Database error while loading stations" });
+  }
+});
+
+// Temporary debug API for Section 3.
+// This confirms that dao.js can read segments from the SQLite database.
+app.get("/api/debug/segments", async (req, res) => {
+  try {
+    const segments = await getAllSegments();
+    res.json(segments);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Database error while loading segments" });
+  }
+});
 // activate the server
 app.listen(port, () => {
   console.log(`Server listening at http://localhost:${port}`);
