@@ -140,3 +140,241 @@ export {
   getAllEvents,
   getUserById,
 };
+
+// SECTION 5 - Full network, planning network, game creation, and ranking
+
+export const getFullNetwork = async () => {
+  const stations = await all(
+    `SELECT id, name, x, y
+     FROM station
+     ORDER BY id`
+  );
+
+  const lines = await all(
+    `SELECT id, name, color
+     FROM line
+     ORDER BY id`
+  );
+
+  const lineStations = await all(
+    `SELECT lineId, stationId, position
+     FROM line_station
+     ORDER BY lineId, position`
+  );
+
+  const segments = await all(
+    `SELECT s.id, s.station1Id, s.station2Id, s.lineId,
+            l.name AS lineName, l.color AS lineColor
+     FROM segment s
+     JOIN line l ON s.lineId = l.id
+     ORDER BY s.id`
+  );
+
+  return {
+    stations,
+    lines,
+    lineStations,
+    segments,
+  };
+};
+
+export const getStationLines = async (stationId) => {
+  return await all(
+    `SELECT lineId
+     FROM line_station
+     WHERE stationId = ?
+     ORDER BY lineId`,
+    [stationId]
+  );
+};
+
+export const isInterchangeStation = async (stationId) => {
+  const stationLines = await getStationLines(stationId);
+  return stationLines.length >= 2;
+};
+
+export const computeShortestDistance = async (startStationId, destinationStationId) => {
+  if (startStationId === destinationStationId) {
+    return 0;
+  }
+
+  const segments = await all(
+    `SELECT station1Id, station2Id
+     FROM segment`
+  );
+
+  const graph = new Map();
+
+  for (const segment of segments) {
+    if (!graph.has(segment.station1Id)) {
+      graph.set(segment.station1Id, []);
+    }
+
+    if (!graph.has(segment.station2Id)) {
+      graph.set(segment.station2Id, []);
+    }
+
+    graph.get(segment.station1Id).push(segment.station2Id);
+    graph.get(segment.station2Id).push(segment.station1Id);
+  }
+
+  const visited = new Set();
+  const queue = [{ stationId: startStationId, distance: 0 }];
+
+  visited.add(startStationId);
+
+  while (queue.length > 0) {
+    const current = queue.shift();
+
+    const neighbors = graph.get(current.stationId) || [];
+
+    for (const neighbor of neighbors) {
+      if (visited.has(neighbor)) {
+        continue;
+      }
+
+      if (neighbor === destinationStationId) {
+        return current.distance + 1;
+      }
+
+      visited.add(neighbor);
+      queue.push({
+        stationId: neighbor,
+        distance: current.distance + 1,
+      });
+    }
+  }
+
+  return null;
+};
+
+export const chooseRandomStartDestination = async () => {
+  const stations = await all(
+    `SELECT id
+     FROM station
+     ORDER BY id`
+  );
+
+  const possiblePairs = [];
+
+  for (const start of stations) {
+    for (const destination of stations) {
+      if (start.id === destination.id) {
+        continue;
+      }
+
+      const distance = await computeShortestDistance(start.id, destination.id);
+
+      if (distance !== null && distance >= 3) {
+        possiblePairs.push({
+          startStationId: start.id,
+          destinationStationId: destination.id,
+          shortestDistance: distance,
+        });
+      }
+    }
+  }
+
+  if (possiblePairs.length === 0) {
+    throw new Error("No valid start/destination pair found");
+  }
+
+  const randomIndex = Math.floor(Math.random() * possiblePairs.length);
+  return possiblePairs[randomIndex];
+};
+
+export const createGame = async (userId) => {
+  const pair = await chooseRandomStartDestination();
+
+  const result = await run(
+    `INSERT INTO game(
+       userId,
+       startStationId,
+       destinationStationId,
+       status,
+       initialCoins,
+       finalScore,
+       submittedRoute,
+       createdAt,
+       submittedAt,
+       completedAt
+     )
+     VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'), ?, ?)`,
+    [
+      userId,
+      pair.startStationId,
+      pair.destinationStationId,
+      "planning",
+      20,
+      null,
+      null,
+      null,
+      null,
+    ]
+  );
+
+  return await getGameById(result.id, userId);
+};
+
+export const getGameById = async (gameId, userId) => {
+  return await get(
+    `SELECT g.id,
+            g.userId,
+            g.startStationId,
+            start.name AS startStationName,
+            g.destinationStationId,
+            destination.name AS destinationStationName,
+            g.status,
+            g.initialCoins,
+            g.finalScore,
+            g.createdAt,
+            g.submittedAt,
+            g.completedAt
+     FROM game g
+     JOIN station start ON g.startStationId = start.id
+     JOIN station destination ON g.destinationStationId = destination.id
+     WHERE g.id = ? AND g.userId = ?`,
+    [gameId, userId]
+  );
+};
+
+export const getPlanningNetwork = async (gameId, userId) => {
+  const game = await getGameById(gameId, userId);
+
+  if (!game) {
+    return null;
+  }
+
+  const stations = await all(
+    `SELECT id, name, x, y
+     FROM station
+     ORDER BY id`
+  );
+
+  const segments = await all(
+    `SELECT id, station1Id, station2Id
+     FROM segment
+     ORDER BY id`
+  );
+
+  return {
+    game,
+    stations,
+    segments,
+  };
+};
+
+export const getRanking = async () => {
+  return await all(
+    `SELECT u.id AS userId,
+            u.name,
+            u.email,
+            MAX(g.finalScore) AS bestScore
+     FROM user u
+     JOIN game g ON u.id = g.userId
+     WHERE g.status = 'completed'
+       AND g.finalScore IS NOT NULL
+     GROUP BY u.id, u.name, u.email
+     ORDER BY bestScore DESC, u.name ASC`
+  );
+};

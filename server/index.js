@@ -6,7 +6,19 @@ import passport from "passport";
 import LocalStrategy from "passport-local";
 import session from "express-session";
 
-import { getAllStations, getAllSegments, getUser, getUserById } from "./dao.js";
+import {
+  getAllStations,
+  getAllSegments,
+  getUser,
+  getUserById,
+  getFullNetwork,
+  createGame,
+  getPlanningNetwork,
+  getGameById,
+  getRanking,
+} from "./dao.js";
+
+import { param, validationResult } from "express-validator";
 // init express
 const app = new express();
 const port = 3001;
@@ -82,6 +94,15 @@ const isLoggedIn = (req, res, next) => {
 
   return res.status(401).json({ error: "Not authenticated" });
 };
+const handleValidationErrors = (req, res, next) => {
+  const errors = validationResult(req);
+
+  if (!errors.isEmpty()) {
+    return res.status(422).json({ errors: errors.array() });
+  }
+
+  next();
+};
 // POST /api/sessions
 // Login
 app.post("/api/sessions", (req, res, next) => {
@@ -149,6 +170,82 @@ app.get("/api/debug/segments", async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Database error while loading segments" });
+  }
+});
+
+// SECTION 5 - Protected network and game creation APIs
+
+app.get("/api/network/full", isLoggedIn, async (req, res) => {
+  try {
+    const network = await getFullNetwork();
+    res.json(network);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+app.post("/api/games", isLoggedIn, async (req, res) => {
+  try {
+    const game = await createGame(req.user.id);
+    res.status(201).json(game);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+app.get(
+  "/api/games/:id/planning",
+  isLoggedIn,
+  param("id").isInt({ min: 1 }).withMessage("Game id must be a positive integer"),
+  handleValidationErrors,
+  async (req, res) => {
+    try {
+      const gameId = Number(req.params.id);
+      const planningData = await getPlanningNetwork(gameId, req.user.id);
+
+      if (!planningData) {
+        return res.status(404).json({ error: "Game not found" });
+      }
+
+      res.json(planningData);
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  }
+);
+
+app.get(
+  "/api/games/:id",
+  isLoggedIn,
+  param("id").isInt({ min: 1 }).withMessage("Game id must be a positive integer"),
+  handleValidationErrors,
+  async (req, res) => {
+    try {
+      const gameId = Number(req.params.id);
+      const game = await getGameById(gameId, req.user.id);
+
+      if (!game) {
+        return res.status(404).json({ error: "Game not found" });
+      }
+
+      res.json(game);
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  }
+);
+
+app.get("/api/ranking", isLoggedIn, async (req, res) => {
+  try {
+    const ranking = await getRanking();
+    res.json(ranking);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Internal server error" });
   }
 });
 // activate the server

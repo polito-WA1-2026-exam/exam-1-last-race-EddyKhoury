@@ -36,3 +36,52 @@ DELETE http://localhost:3001/api/sessions/current
 
 ### Current session after logout
 GET http://localhost:3001/api/sessions/current
+
+### SECTION 5 TESTS
+
+### 1. Anonymous user cannot fetch full network
+GET http://localhost:3001/api/network/full
+
+
+### 2. Login with Alice
+POST http://localhost:3001/api/sessions
+Content-Type: application/json
+
+{
+  "email": "alice@example.com",
+  "password": "password"
+}
+
+
+### 3. Logged-in user can fetch full network
+GET http://localhost:3001/api/network/full
+
+
+### 4. Logged-in user can create a game
+POST http://localhost:3001/api/games
+
+
+### 5. Logged-in user can get created game
+### Replace 1 with the game id returned above
+GET http://localhost:3001/api/games/3
+
+
+### 6. Logged-in user can get planning data
+### Replace 1 with the game id returned above
+GET http://localhost:3001/api/games/3/planning
+
+
+### 7. Logged-in user can get ranking
+GET http://localhost:3001/api/ranking
+
+
+### 8. Invalid game id validation
+GET http://localhost:3001/api/games/abc
+
+
+### 9. Logout
+DELETE http://localhost:3001/api/sessions/current
+
+
+### 10. Ranking blocked after logout
+GET http://localhost:3001/api/ranking
