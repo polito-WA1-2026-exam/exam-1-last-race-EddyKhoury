@@ -1,0 +1,38 @@
+### Test server is running
+GET http://localhost:3001/api/test
+
+
+### Debug stations from Section 3
+GET http://localhost:3001/api/debug/stations
+
+
+### Login failure - wrong password
+POST http://localhost:3001/api/sessions
+Content-Type: application/json
+
+{
+  "email": "alice@example.com",
+  "password": "wrong"
+}
+
+
+### Login success
+POST http://localhost:3001/api/sessions
+Content-Type: application/json
+
+{
+  "email": "alice@example.com",
+  "password": "password"
+}
+
+
+### Current session after login
+GET http://localhost:3001/api/sessions/current
+
+
+### Logout
+DELETE http://localhost:3001/api/sessions/current
+
+
+### Current session after logout
+GET http://localhost:3001/api/sessions/current
