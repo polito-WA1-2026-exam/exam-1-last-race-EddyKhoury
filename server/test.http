@@ -85,3 +85,93 @@ DELETE http://localhost:3001/api/sessions/current
 
 ### 10. Ranking blocked after logout
 GET http://localhost:3001/api/ranking
+
+
+### ===============================
+### Section 6 - Route validation and execution
+### ===============================
+
+### Login with Alice
+POST http://localhost:3001/api/sessions
+Content-Type: application/json
+
+{
+  "email": "alice@example.com",
+  "password": "password"
+}
+
+### Create a new game for Section 6 testing
+POST http://localhost:3001/api/games
+
+### Get the created game
+### Replace 3 with the new game id returned above
+GET http://localhost:3001/api/games/4
+
+### Get planning data for the created game
+### Replace 3 with the new game id returned above
+GET http://localhost:3001/api/games/4/planning
+
+### Submit invalid route - empty route
+### Replace 3 with the new game id returned above
+POST http://localhost:3001/api/games/4/route
+Content-Type: application/json
+
+{
+  "segments": []
+}
+
+### Get game after invalid route
+### finalScore should be 0
+GET http://localhost:3001/api/games/4
+
+### Get steps after invalid route
+### should return []
+GET http://localhost:3001/api/games/4/steps
+
+### Create another game for valid route testing
+POST http://localhost:3001/api/games
+
+### Submit valid route
+### Replace 4 with the new game id.
+### Replace the segment ids with a real valid route from planning data.
+POST http://localhost:3001/api/games/4/route
+Content-Type: application/json
+
+{
+  "segments": [18, 12, 3, 4]
+}
+
+### Get game after valid route
+### finalScore should be updated
+GET http://localhost:3001/api/games/8
+
+### Get steps after valid route
+### should return one game_step per submitted segment
+GET http://localhost:3001/api/games/8/steps
+
+### Try submitting the same completed game again
+### should return 409 because game is no longer in planning
+POST http://localhost:3001/api/games/8/route
+Content-Type: application/json
+
+{
+  "segments": [18, 12, 3, 4]  
+}
+
+### Invalid request body
+### should return 422 because segments is not an array
+POST http://localhost:3001/api/games/8/route
+Content-Type: application/json
+
+{
+  "segments": "wrong"
+}
+
+### Invalid game id
+### should return 422
+POST http://localhost:3001/api/games/abc/route
+Content-Type: application/json
+
+{
+  "segments": [1, 2, 3]
+}

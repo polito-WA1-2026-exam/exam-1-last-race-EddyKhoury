@@ -16,9 +16,11 @@ import {
   getPlanningNetwork,
   getGameById,
   getRanking,
+  submitRoute,
+  getGameSteps
 } from "./dao.js";
 
-import { param, validationResult } from "express-validator";
+import { param, body, validationResult } from "express-validator";
 // init express
 const app = new express();
 const port = 3001;
@@ -235,6 +237,71 @@ app.get(
     } catch (err) {
       console.error(err);
       res.status(500).json({ error: "Internal server error" });
+    }
+  }
+);
+// Submit a planned route and execute the game
+app.post(
+  "/api/games/:id/route",
+  isLoggedIn,
+  param("id")
+    .isInt({ min: 1 })
+    .withMessage("Game id must be a positive integer"),
+  body("segments")
+    .isArray()
+    .withMessage("segments must be an array"),
+  body("segments.*")
+    .isInt({ min: 1 })
+    .withMessage("Each segment id must be a positive integer")
+    .toInt(),
+  handleValidationErrors,
+  async (req, res) => {
+    try {
+      const gameId = Number(req.params.id);
+      const segmentIds = req.body.segments;
+
+      const result = await submitRoute(gameId, req.user.id, segmentIds);
+
+      if (!result) {
+        return res.status(404).json({ error: "Game not found" });
+      }
+
+      return res.status(200).json(result);
+    } catch (err) {
+      if (err.code === "GAME_NOT_SUBMITTABLE") {
+        return res.status(409).json({ error: err.message });
+      }
+
+      console.error(err);
+      return res.status(500).json({ error: "Internal server error" });
+    }
+  }
+);
+
+// Get execution steps for a completed game
+app.get(
+  "/api/games/:id/steps",
+  isLoggedIn,
+  param("id")
+    .isInt({ min: 1 })
+    .withMessage("Game id must be a positive integer"),
+  handleValidationErrors,
+  async (req, res) => {
+    try {
+      const gameId = Number(req.params.id);
+
+      const game = await getGameById(gameId, req.user.id);
+
+      if (!game) {
+        return res.status(404).json({ error: "Game not found" });
+      }
+
+      const steps = await getGameSteps(gameId, req.user.id);
+
+      return res.status(200).json(steps);
+    } catch (err) {
+      console.error(err);
+      return res.status(500).json({ error: "Internal server error" });
     }
   }
 );

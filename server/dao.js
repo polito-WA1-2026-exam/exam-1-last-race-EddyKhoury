@@ -378,3 +378,287 @@ export const getRanking = async () => {
      ORDER BY bestScore DESC, u.name ASC`
   );
 };
+
+// ===============================
+// Section 6 - Route validation and execution
+// ===============================
+
+async function getSegmentById(segmentId) {
+  return get(
+    `SELECT id, station1Id, station2Id, lineId
+     FROM segment
+     WHERE id = ?`,
+    [segmentId]
+  );
+}
+
+async function getRandomEvent() {
+  return get(
+    `SELECT id, description, effect
+     FROM event
+     ORDER BY RANDOM()
+     LIMIT 1`
+  );
+}
+
+export async function validateRoute(game, segmentIds) {
+  if (!Array.isArray(segmentIds)) {
+    return {
+      valid: false,
+      reason: "Submitted route must be an array of segment IDs",
+      steps: []
+    };
+  }
+
+  if (segmentIds.length === 0) {
+    return {
+      valid: false,
+      reason: "Route is empty",
+      steps: []
+    };
+  }
+
+  for (const segmentId of segmentIds) {
+    if (!Number.isInteger(segmentId) || segmentId <= 0) {
+      return {
+        valid: false,
+        reason: "All submitted segment IDs must be positive integers",
+        steps: []
+      };
+    }
+  }
+
+  let currentStationId = game.startStationId;
+  let currentLineId = null;
+  const reconstructedSteps = [];
+
+  for (let i = 0; i < segmentIds.length; i++) {
+    const segmentId = segmentIds[i];
+    const segment = await getSegmentById(segmentId);
+
+    if (!segment) {
+      return {
+        valid: false,
+        reason: `Segment ${segmentId} does not exist`,
+        steps: []
+      };
+    }
+
+    const touchesCurrentStation =
+      segment.station1Id === currentStationId ||
+      segment.station2Id === currentStationId;
+
+    if (!touchesCurrentStation) {
+      return {
+        valid: false,
+        reason: `Segment ${segmentId} is not connected to the current station`,
+        steps: []
+      };
+    }
+
+    if (currentLineId === null) {
+      currentLineId = segment.lineId;
+    } else if (segment.lineId !== currentLineId) {
+      const canChangeLine = await isInterchangeStation(currentStationId);
+
+      if (!canChangeLine) {
+        return {
+          valid: false,
+          reason: "Line change attempted at a non-interchange station",
+          steps: []
+        };
+      }
+
+      currentLineId = segment.lineId;
+    }
+
+    const nextStationId =
+      segment.station1Id === currentStationId
+        ? segment.station2Id
+        : segment.station1Id;
+
+    reconstructedSteps.push({
+      stepIndex: i + 1,
+      segmentId: segment.id,
+      fromStationId: currentStationId,
+      toStationId: nextStationId,
+      lineId: segment.lineId
+    });
+
+    currentStationId = nextStationId;
+  }
+
+  if (currentStationId !== game.destinationStationId) {
+    return {
+      valid: false,
+      reason: "Route does not reach the assigned destination station",
+      steps: []
+    };
+  }
+
+  return {
+    valid: true,
+    reason: "Route is valid",
+    steps: reconstructedSteps
+  };
+}
+
+export async function executeValidRoute(gameId, reconstructedSteps) {
+  let coins = 20;
+  const executedSteps = [];
+
+  for (const step of reconstructedSteps) {
+    const event = await getRandomEvent();
+
+    const coinsBefore = coins;
+    coins = coins + event.effect;
+    const coinsAfter = coins;
+
+    await run(
+      `INSERT INTO game_step(
+        gameId,
+        stepIndex,
+        fromStationId,
+        toStationId,
+        lineId,
+        eventId,
+        coinsBefore,
+        coinsAfter
+      )
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        gameId,
+        step.stepIndex,
+        step.fromStationId,
+        step.toStationId,
+        step.lineId,
+        event.id,
+        coinsBefore,
+        coinsAfter
+      ]
+    );
+
+    executedSteps.push({
+      ...step,
+      eventId: event.id,
+      eventDescription: event.description,
+      eventEffect: event.effect,
+      coinsBefore,
+      coinsAfter
+    });
+  }
+
+  return {
+    finalCoins: coins,
+    finalScore: Math.max(0, coins),
+    steps: executedSteps
+  };
+}
+
+export async function submitRoute(gameId, userId, segmentIds) {
+  const game = await getGameById(gameId, userId);
+
+  if (!game) {
+    return null;
+  }
+
+  if (game.status !== "planning") {
+    const error = new Error("Game is not in planning state");
+    error.code = "GAME_NOT_SUBMITTABLE";
+    throw error;
+  }
+
+  const submittedRoute = JSON.stringify(segmentIds);
+  const validation = await validateRoute(game, segmentIds);
+
+  await run("BEGIN TRANSACTION");
+
+  try {
+    await run(
+      `DELETE FROM game_step
+       WHERE gameId = ?`,
+      [gameId]
+    );
+
+    if (!validation.valid) {
+      await run(
+        `UPDATE game
+         SET status = 'completed',
+             finalScore = 0,
+             submittedRoute = ?,
+             submittedAt = datetime('now'),
+             completedAt = datetime('now')
+         WHERE id = ?
+           AND userId = ?`,
+        [submittedRoute, gameId, userId]
+      );
+
+      await run("COMMIT");
+
+      return {
+        valid: false,
+        reason: validation.reason,
+        finalScore: 0,
+        stepCount: 0
+      };
+    }
+
+    const execution = await executeValidRoute(gameId, validation.steps);
+
+    await run(
+      `UPDATE game
+       SET status = 'completed',
+           finalScore = ?,
+           submittedRoute = ?,
+           submittedAt = datetime('now'),
+           completedAt = datetime('now')
+       WHERE id = ?
+         AND userId = ?`,
+      [execution.finalScore, submittedRoute, gameId, userId]
+    );
+
+    await run("COMMIT");
+
+    return {
+      valid: true,
+      reason: validation.reason,
+      finalScore: execution.finalScore,
+      finalCoins: execution.finalCoins,
+      stepCount: execution.steps.length
+    };
+  } catch (err) {
+    await run("ROLLBACK");
+    throw err;
+  }
+}
+
+export async function getGameSteps(gameId, userId) {
+  return all(
+    `SELECT
+       gs.id,
+       gs.gameId,
+       gs.stepIndex,
+       gs.fromStationId,
+       fs.name AS fromStationName,
+       gs.toStationId,
+       ts.name AS toStationName,
+       gs.lineId,
+       l.name AS lineName,
+       l.color AS lineColor,
+       gs.eventId,
+       e.description AS eventDescription,
+       e.effect AS eventEffect,
+       gs.coinsBefore,
+       gs.coinsAfter
+     FROM game_step gs
+     JOIN game g ON gs.gameId = g.id
+     JOIN station fs ON gs.fromStationId = fs.id
+     JOIN station ts ON gs.toStationId = ts.id
+     JOIN line l ON gs.lineId = l.id
+     JOIN event e ON gs.eventId = e.id
+     WHERE gs.gameId = ?
+       AND g.userId = ?
+     ORDER BY gs.stepIndex`,
+    [gameId, userId]
+  );
+}
