@@ -42,7 +42,7 @@ function LoginForm() {
 
   return (
     <Container className="py-4">
-      <Card className="shadow-sm mx-auto login-card">
+      <Card className="shadow-sm mx-auto">
         <Card.Body className="p-4">
           <h1 className="h3 mb-3">Login</h1>
 
