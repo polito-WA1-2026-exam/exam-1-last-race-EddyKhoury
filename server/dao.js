@@ -265,6 +265,8 @@ export const chooseRandomStartDestination = async () => {
 
       const distance = await computeShortestDistance(start.id, destination.id);
 
+      // Final specification: distance is counted as number of segments/edges.
+      // Example: A -> B -> C -> D has distance 3.
       if (distance !== null && distance >= 3) {
         possiblePairs.push({
           startStationId: start.id,
