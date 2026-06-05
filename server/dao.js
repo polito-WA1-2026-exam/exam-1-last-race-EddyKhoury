@@ -420,6 +420,8 @@ export async function validateRoute(game, segmentIds) {
     };
   }
 
+  const usedSegmentIds = new Set();
+
   for (const segmentId of segmentIds) {
     if (!Number.isInteger(segmentId) || segmentId <= 0) {
       return {
@@ -428,6 +430,16 @@ export async function validateRoute(game, segmentIds) {
         steps: []
       };
     }
+
+    if (usedSegmentIds.has(segmentId)) {
+      return {
+        valid: false,
+        reason: `Segment ${segmentId} is used more than once`,
+        steps: []
+      };
+    }
+
+    usedSegmentIds.add(segmentId);
   }
 
   let currentStationId = game.startStationId;

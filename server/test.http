@@ -105,7 +105,7 @@ POST http://localhost:3001/api/games
 
 ### Get the created game
 ### Replace 3 with the new game id returned above
-GET http://localhost:3001/api/games/4
+GET http://localhost:3001/api/games/3
 
 ### Get planning data for the created game
 ### Replace 3 with the new game id returned above
@@ -175,3 +175,16 @@ Content-Type: application/json
 {
   "segments": [1, 2, 3]
 }
+
+
+### Final spec test - duplicate segment IDs are invalid
+### Replace 9 with a fresh planning game id before running.
+POST http://localhost:3001/api/games/3/route
+Content-Type: application/json
+
+{
+  "segments": [1, 1]
+}
+
+### Check no steps were created after duplicate segment invalid route
+GET http://localhost:3001/api/games/3/steps
