@@ -1,0 +1,23 @@
+.network-map-wrapper {
+    overflow-x: auto;
+}
+
+.network-map-svg {
+    min-width: 720px;
+    width: 100%;
+    max-height: 480px;
+    height: auto;
+    display: block;
+}
+
+.network-map-station-label {
+    font-size: 14px;
+    font-weight: 600;
+    fill: #212529;
+}
+
+.network-map-station-circle {
+    fill: white;
+    stroke: #212529;
+    stroke-width: 3;
+}
