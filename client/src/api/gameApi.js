@@ -33,3 +33,26 @@ export async function createGame() {
 
   return await handleResponse(response);
 }
+
+export async function getPlanningGame(gameId) {
+  const response = await fetch(`${API_URL}/games/${gameId}/planning`, {
+    credentials: "include",
+  });
+
+  return await handleResponse(response);
+}
+
+export async function submitRoute(gameId, segmentIds) {
+  const response = await fetch(`${API_URL}/games/${gameId}/route`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    credentials: "include",
+    body: JSON.stringify({
+      segments: segmentIds,
+    }),
+  });
+
+  return await handleResponse(response);
+}
