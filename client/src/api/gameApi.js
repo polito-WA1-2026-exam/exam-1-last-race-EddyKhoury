@@ -1,20 +1,13 @@
 const API_URL = "http://localhost:3001/api";
 
 async function handleResponse(response) {
+  const data = await response.json().catch(() => ({}));
+
   if (!response.ok) {
-    let errorMessage = "Request failed";
-
-    try {
-      const errorBody = await response.json();
-      errorMessage = errorBody.error || errorBody.message || errorMessage;
-    } catch {
-      // If the server does not return JSON, keep the default message.
-    }
-
-    throw new Error(errorMessage);
+    throw new Error(data.error || "API request failed");
   }
 
-  return await response.json();
+  return data;
 }
 
 export async function getFullNetwork() {
@@ -22,7 +15,7 @@ export async function getFullNetwork() {
     credentials: "include",
   });
 
-  return await handleResponse(response);
+  return handleResponse(response);
 }
 
 export async function createGame() {
@@ -31,7 +24,7 @@ export async function createGame() {
     credentials: "include",
   });
 
-  return await handleResponse(response);
+  return handleResponse(response);
 }
 
 export async function getPlanningGame(gameId) {
@@ -39,7 +32,7 @@ export async function getPlanningGame(gameId) {
     credentials: "include",
   });
 
-  return await handleResponse(response);
+  return handleResponse(response);
 }
 
 export async function submitRoute(gameId, segmentIds) {
@@ -54,5 +47,29 @@ export async function submitRoute(gameId, segmentIds) {
     }),
   });
 
-  return await handleResponse(response);
+  return handleResponse(response);
+}
+
+export async function getGame(gameId) {
+  const response = await fetch(`${API_URL}/games/${gameId}`, {
+    credentials: "include",
+  });
+
+  return handleResponse(response);
+}
+
+export async function getGameSteps(gameId) {
+  const response = await fetch(`${API_URL}/games/${gameId}/steps`, {
+    credentials: "include",
+  });
+
+  return handleResponse(response);
+}
+
+export async function getRanking() {
+  const response = await fetch(`${API_URL}/ranking`, {
+    credentials: "include",
+  });
+
+  return handleResponse(response);
 }
