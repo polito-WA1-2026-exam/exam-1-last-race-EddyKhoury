@@ -1,7 +1,10 @@
 import { Button, Card, Col, Container, Row } from "react-bootstrap";
 import { Link } from "react-router";
+import { useContext } from "react";
+import UserContext from "../contexts/UserContext";
 
 function InstructionsPage() {
+  const { loggedIn } = useContext(UserContext);
   return (
     <Container className="py-4">
       <Card className="shadow-sm mb-4">
@@ -19,8 +22,8 @@ function InstructionsPage() {
           </p>
 
           <div className="d-flex gap-2 flex-wrap">
-            <Button as={Link} to="/login" variant="primary">
-              Login to play
+            <Button as={Link} to={loggedIn ? "/setup" : "/login"} variant="primary">
+              {loggedIn ? "Go to setup" : "Login to play"}
             </Button>
           </div>
         </Card.Body>
