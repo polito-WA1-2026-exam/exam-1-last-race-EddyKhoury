@@ -7,9 +7,8 @@ const db = new sqlite.Database("last-race.sqlite", (err) => {
   }
 });
 
-/**
- * SELECT query that returns one row.
- */
+// SELECT query that returns one row.
+
 const get = (sql, params = []) => {
   return new Promise((resolve, reject) => {
     db.get(sql, params, (err, row) => {
@@ -22,9 +21,9 @@ const get = (sql, params = []) => {
   });
 };
 
-/**
- * SELECT query that returns many rows.
- */
+
+// SELECT query that returns many rows.
+
 const all = (sql, params = []) => {
   return new Promise((resolve, reject) => {
     db.all(sql, params, (err, rows) => {
@@ -37,10 +36,10 @@ const all = (sql, params = []) => {
   });
 };
 
-/**
- * INSERT / UPDATE / DELETE query.
- * We prepare it now because later sections will need it.
- */
+
+// INSERT / UPDATE / DELETE query.
+// We prepare it now because later sections will need it.
+
 const run = (sql, params = []) => {
   return new Promise((resolve, reject) => {
     db.run(sql, params, function (err) {
@@ -187,12 +186,12 @@ export const getStationLines = async (stationId) => {
     [stationId]
   );
 };
-
+//helper function: Check whether a station belongs to at least two lines.
 export const isInterchangeStation = async (stationId) => {
   const stationLines = await getStationLines(stationId);
   return stationLines.length >= 2;
 };
-
+//Compute the shortest distance between two stations using the segment graph computes the segments/edges
 export const computeShortestDistance = async (startStationId, destinationStationId) => {
   if (startStationId === destinationStationId) {
     return 0;
@@ -247,7 +246,7 @@ export const computeShortestDistance = async (startStationId, destinationStation
 
   return null;
 };
-
+//choose a valid random start and destination pair. frontend is nevver allowed to choose only server
 export const chooseRandomStartDestination = async () => {
   const stations = await all(
     `SELECT id

@@ -1,10 +1,10 @@
 // imports
-import express from "express";
-import morgan from "morgan";
-import cors from "cors";
-import passport from "passport";
-import LocalStrategy from "passport-local";
-import session from "express-session";
+import express from "express"; // used to create the server
+import morgan from "morgan"; //used for logs request
+import cors from "cors"; //allows frontend/backend communication
+import passport from "passport"; // authentication framework
+import LocalStrategy from "passport-local"; //email/password login strategy
+import session from "express-session";// session cookies
 
 import {
   getAllStations,
@@ -23,20 +23,21 @@ import {
 import { param, body, validationResult } from "express-validator";
 // init express
 const app = new express();
-const port = 3001;
+const port = 3001; //backend listens at port = 3001
 
-app.use(morgan("dev"));
-app.use(express.json());
+//used for debugging. to be used to see API requests and status codes
+app.use(morgan("dev")); 
+app.use(express.json()); 
 
 
-//  The React client runs on http://localhost:5173.
-// x   The Express server runs on http://localhost:3001.
+//the React client runs on http://localhost:5173.
+// x the Express server runs on http://localhost:3001.
 const corsOptions = {
   origin: "http://localhost:5173",
-  credentials: true,
+  credentials: true, //cookies are allowed between client and server
 };
 
-app.use(cors(corsOptions));
+app.use(cors(corsOptions)); //activates the cors configuration for all routes
 
 app.use(
   session({
@@ -50,7 +51,7 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 const localStrategy = LocalStrategy.Strategy;
-
+// function used to verify the user
 passport.use(
   new localStrategy(
     {
@@ -74,11 +75,11 @@ passport.use(
     }
   )
 );
-
+// when login is successful Passport stores only the userID in the session and not the whole user Object
 passport.serializeUser((user, done) => {
   done(null, user.id);
 });
-
+// later requests passport reads the userID from the session and reloads the user from the database
 passport.deserializeUser(async (id, done) => {
   try {
     const user = await getUserById(id);
@@ -96,6 +97,7 @@ const isLoggedIn = (req, res, next) => {
 
   return res.status(401).json({ error: "Not authenticated" });
 };
+//check express-validator results
 const handleValidationErrors = (req, res, next) => {
   const errors = validationResult(req);
 
@@ -143,7 +145,7 @@ app.delete("/api/sessions/current", (req, res) => {
   });
 });
 
-//Temporary test API. This confirms that the server is running and that the client will later be able to call /api/... endpoints
+//temporary test API. This confirms that the server is running and that the client will later be able to call /api/... endpoints
 app.get("/api/test", (req, res) => {
   res.json({
     message: "Last Race server is running",

@@ -26,7 +26,7 @@ Anonymous users can only access `/` and `/login`. The game pages and ranking are
 
     ```json
     {
-      "email": "alice@example.com",
+      "email": "manuel.neuer@example.com",
       "password": "password"
     }
     ```
@@ -35,8 +35,8 @@ Anonymous users can only access `/` and `/login`. The game pages and ranking are
     ```json
     {
       "id": 1,
-      "email": "alice@example.com",
-      "name": "Alice"
+      "email": "manuel.neuer@example.com",
+      "name": "Manuel Neuer"
     }
     ```
   * This API logs in the user and creates a session cookie.
@@ -49,8 +49,8 @@ Anonymous users can only access `/` and `/login`. The game pages and ranking are
     ```json
     {
       "id": 1,
-      "email": "alice@example.com",
-      "name": "Alice"
+      "email": "manuel.neuer@example.com",
+      "name": "Manuel Neuer"
     }
     ```
   * This API checks if the user is already logged in.
@@ -182,14 +182,10 @@ All the following APIs are protected and require login.
 
 ## Users Credentials
 
-* [alice@example.com](mailto:alice@example.com), password
-* [bruno@example.com](mailto:bruno@example.com), password
-* [clara@example.com](mailto:clara@example.com), password
+* [manuel.neuer@example.com](mailto:manuel.neuer@example.com), password
+* [toni.kroos@example.com](mailto:toni.kroos@example.com), password
+* [thomas.muller@example.com](mailto:thomas.muller@example.com), password
 
 ## Use of AI Tools
 
-I used ChatGPT as an assistant and debugger during the project. It helped me split the work into sections, keep track of what I had already completed, and plan what still needed to be done. After finishing each section, I updated an MD file with the completed work, files changed, tests done, and next steps, so the project could continue in an organized way.
-
-ChatGPT also helped me debug code, understand errors, think of possible test cases, and check edge cases. For example, it helped me plan manual tests for valid routes, invalid routes, timer expiration, protected pages, ranking behavior, and database restoration after testing. I also used it to discuss possible improvements and to make sure the implementation stayed close to the course style.
-
-I did not copy everything blindly. I tested the project manually in the browser and with backend API requests, checked the results myself, and adapted the code when needed.
+I used ChatGPT as an assistant and debugger during the project. It helped me split the work into sections, keep track of what I had already completed, and plan what still needed to be done. After finishing each section, I updated an MD file with the completed work, files changed, tests done, and next steps, so the project could continue in an organized way. ChatGPT also helped me debug code, understand errors, think of possible test cases, and check edge cases.

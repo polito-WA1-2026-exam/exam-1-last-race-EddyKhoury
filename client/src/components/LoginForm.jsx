@@ -8,8 +8,8 @@ import { doLogin } from "../api/auth";
 function LoginForm() {
   const { setUser, setLoggedIn } = useContext(UserContext);
 
-  const [email, setEmail] = useState("alice@example.com");
-  const [password, setPassword] = useState("password");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
@@ -59,7 +59,7 @@ function LoginForm() {
                 type="email"
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
-                disabled={submitting}
+                placeholder="Enter email"
               />
             </Form.Group>
 
@@ -69,7 +69,7 @@ function LoginForm() {
                 type="password"
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
-                disabled={submitting}
+                placeholder="Enter password"
               />
             </Form.Group>
 

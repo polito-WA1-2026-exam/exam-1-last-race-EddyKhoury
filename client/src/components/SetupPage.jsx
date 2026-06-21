@@ -14,6 +14,7 @@ function SetupPage() {
 
   const navigate = useNavigate();
 
+  //load the full network once when SetupPage opens
   useEffect(() => {
     async function loadNetwork() {
       try {
@@ -32,6 +33,8 @@ function SetupPage() {
     loadNetwork();
   }, []);
 
+
+  //runs when the Start Game button is clicked
   const handleStartGame = async () => {
     try {
       setStartingGame(true);

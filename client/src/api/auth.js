@@ -1,5 +1,6 @@
-const API_URL = "http://localhost:3001/api";
+const API_URL = "http://localhost:3001/api"; //stores the backend api base URL 
 
+//this helper reads the error response from the server and returns a clean error message
 async function getErrorMessage(response) {
   try {
     const errorBody = await response.json();
@@ -9,6 +10,7 @@ async function getErrorMessage(response) {
   }
 }
 
+//sends the email and password to the backend login endpoint
 async function doLogin(email, password) {
   const response = await fetch(`${API_URL}/sessions`, {
     method: "POST",
@@ -26,6 +28,7 @@ async function doLogin(email, password) {
   return await response.json();
 }
 
+//checks whether the browser already has a valid login session cookie 
 async function checkSession() {
   const response = await fetch(`${API_URL}/sessions/current`, {
     credentials: "include"
@@ -42,6 +45,7 @@ async function checkSession() {
   return await response.json();
 }
 
+//log out the user by deleting the server session 
 async function doLogout() {
   const response = await fetch(`${API_URL}/sessions/current`, {
     method: "DELETE",

@@ -183,28 +183,28 @@ const createTables = async () => {
 
 const insertSeedData = async () => {
   const stations = [
-    [1, "Central Gate", 300, 250],
-    [2, "North Park", 300, 120],
-    [3, "Museum Hill", 460, 120],
-    [4, "River Side", 620, 120],
-    [5, "East Market", 760, 250],
-    [6, "South Pier", 620, 380],
-    [7, "Garden Square", 460, 380],
-    [8, "Old Town", 300, 380],
-    [9, "West Harbor", 140, 250],
-    [10, "Stadium", 140, 120],
-    [11, "University", 460, 250],
-    [12, "Airport Road", 760, 120],
-    [13, "Tech Village", 760, 380],
-    [14, "Lake View", 300, 520],
-    [15, "Forest End", 460, 520]
+    [1, "Hogwarts Castle", 300, 250],
+    [2, "Hogsmeade Village", 300, 120],
+    [3, "Diagon Alley", 460, 120],
+    [4, "Black Lake", 620, 120],
+    [5, "Knockturn Alley", 760, 250],
+    [6, "Nurmengard", 620, 380],
+    [7, "Herbology house", 460, 380],
+    [8, "Godric's Hollow", 300, 380],
+    [9, "The Burrow", 140, 250],
+    [10, "Quidditch Pitch", 140, 120],
+    [11, "Hogwarts Library", 460, 250],
+    [12, "Privet Drive", 760, 120],
+    [13, "Ministry of Magic", 760, 380],
+    [14, "Forbidden Forest", 300, 520],
+    [15, "Azkaban", 460, 520]
   ];
 
   const lines = [
-    [1, "Blue Line", "#0d6efd"],
-    [2, "Green Line", "#198754"],
-    [3, "Red Line", "#dc3545"],
-    [4, "Gold Line", "#ffc107"]
+    [1, "Sapphire Line", "#0d6efd"],
+    [2, "Emerald Line", "#198754"],
+    [3, "Crimson Line", "#dc3545"],
+    [4, "Golden Line", "#ffc107"]
   ];
 
   const lineStations = [
@@ -260,14 +260,14 @@ const insertSeedData = async () => {
   ];
 
   const events = [
-    [1, "Signal shortcut found", 3],
-    [2, "Minor platform delay", -2],
-    [3, "Passenger bonus collected", 2],
-    [4, "Track inspection slowdown", -3],
-    [5, "Clear tunnel ahead", 1],
-    [6, "Wrong-platform confusion", -1],
-    [7, "Express boost", 4],
-    [8, "Power fluctuation", -4]
+    [1, "Hidden tunnel discovered", 3],
+    [2, "Wandering guard delay", -2],
+    [3, "Helpful traveler gift", 2],
+    [4, "Bridge inspection slowdown", -3],
+    [5, "Clear passage ahead", 1],
+    [6, "Wrong gate confusion", -1],
+    [7, "Dragonwind boost", 4],
+    [8, "Magic surge disruption", -4]
   ];
 
   await run("BEGIN TRANSACTION");
@@ -308,9 +308,9 @@ const insertSeedData = async () => {
       );
     }
 
-    await createUser(1, "alice@example.com", "Alice", "password");
-    await createUser(2, "bruno@example.com", "Bruno", "password");
-    await createUser(3, "clara@example.com", "Clara", "password");
+    await createUser(1, "manuel.neuer@example.com", "Manuel Neuer", "password");
+    await createUser(2, "toni.kroos@example.com", "Toni Kroos", "password");
+    await createUser(3, "thomas.muller@example.com", "Thomas Muller", "password");
 
     await run(
       `
@@ -437,9 +437,9 @@ try {
 
   console.log("\nlast-race.sqlite created and seeded successfully.");
   console.log("\nSeeded credentials for README:");
-  console.log("alice@example.com / password");
-  console.log("bruno@example.com / password");
-  console.log("clara@example.com / password");
+  console.log("manuel.neuer@example.com / password");
+  console.log("toni.kroos@example.com / password");
+  console.log("thomas.muller@example.com / password");
 } catch (err) {
   console.error("Error while creating database:");
   console.error(err);

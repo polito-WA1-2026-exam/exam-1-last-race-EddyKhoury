@@ -1,5 +1,6 @@
 const API_URL = "http://localhost:3001/api";
 
+//checks if the backend response is OK
 async function handleResponse(response) {
   const data = await response.json().catch(() => ({}));
 
@@ -10,6 +11,7 @@ async function handleResponse(response) {
   return data;
 }
 
+//fetches the full network for the setup page
 export async function getFullNetwork() {
   const response = await fetch(`${API_URL}/network/full`, {
     credentials: "include",
@@ -18,6 +20,7 @@ export async function getFullNetwork() {
   return handleResponse(response);
 }
 
+//asks the server to create a new game
 export async function createGame() {
   const response = await fetch(`${API_URL}/games`, {
     method: "POST",

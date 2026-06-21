@@ -11,7 +11,7 @@ POST http://localhost:3001/api/sessions
 Content-Type: application/json
 
 {
-  "email": "alice@example.com",
+  "email": "manuel.neuer@example.com",
   "password": "wrong"
 }
 
@@ -21,7 +21,7 @@ POST http://localhost:3001/api/sessions
 Content-Type: application/json
 
 {
-  "email": "alice@example.com",
+  "email": "manuel.neuer@example.com",
   "password": "password"
 }
 
@@ -43,12 +43,12 @@ GET http://localhost:3001/api/sessions/current
 GET http://localhost:3001/api/network/full
 
 
-### 2. Login with Alice
+### 2. Login with manuel
 POST http://localhost:3001/api/sessions
 Content-Type: application/json
 
 {
-  "email": "alice@example.com",
+  "email": "manuel.neuer@example.com",
   "password": "password"
 }
 
@@ -91,12 +91,12 @@ GET http://localhost:3001/api/ranking
 ### Section 6 - Route validation and execution
 ### ===============================
 
-### Login with Alice
+### Login with manuel
 POST http://localhost:3001/api/sessions
 Content-Type: application/json
 
 {
-  "email": "alice@example.com",
+  "email": "manuel.neuer@example.com",
   "password": "password"
 }
 
