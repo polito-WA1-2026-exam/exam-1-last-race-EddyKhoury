@@ -2,7 +2,7 @@
 GET http://localhost:3001/api/test
 
 
-### Debug stations from Section 3
+### Debug stations 
 GET http://localhost:3001/api/debug/stations
 
 
@@ -97,7 +97,7 @@ Content-Type: application/json
   "password": "password"
 }
 
-### Create a new game for Section 6 testing
+### Create a new game for testing
 POST http://localhost:3001/api/games
 
 ### Get the created game
