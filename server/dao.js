@@ -1,14 +1,23 @@
+// ===============================
+// Imports and database connection
+// ===============================
+
 import sqlite from "sqlite3";
 import crypto from "crypto";
 
+// Opens the SQLite database used by the backend
 const db = new sqlite.Database("last-race.sqlite", (err) => {
   if (err) {
     throw err;
   }
 });
 
-// SELECT query that returns one row.
 
+// ===============================
+// Generic database helper functions
+// ===============================
+
+// Executes a SELECT query that returns one row
 const get = (sql, params = []) => {
   return new Promise((resolve, reject) => {
     db.get(sql, params, (err, row) => {
@@ -21,9 +30,7 @@ const get = (sql, params = []) => {
   });
 };
 
-
-// SELECT query that returns many rows.
-
+// Executes a SELECT query that returns multiple rows
 const all = (sql, params = []) => {
   return new Promise((resolve, reject) => {
     db.all(sql, params, (err, rows) => {
@@ -36,10 +43,7 @@ const all = (sql, params = []) => {
   });
 };
 
-
-// INSERT / UPDATE / DELETE query.
-// We prepare it now because later sections will need it.
-
+// Executes an INSERT, UPDATE, DELETE, or transaction query
 const run = (sql, params = []) => {
   return new Promise((resolve, reject) => {
     db.run(sql, params, function (err) {
@@ -55,6 +59,12 @@ const run = (sql, params = []) => {
   });
 };
 
+
+// ===============================
+// Basic database read functions
+// ===============================
+
+// Returns all stations with their map coordinates
 const getAllStations = () => {
   return all(
     `SELECT id, name, x, y
@@ -63,6 +73,7 @@ const getAllStations = () => {
   );
 };
 
+// Returns all metro lines with their colors
 const getAllLines = () => {
   return all(
     `SELECT id, name, color
@@ -71,6 +82,7 @@ const getAllLines = () => {
   );
 };
 
+// Returns all direct station-to-station segments
 const getAllSegments = () => {
   return all(
     `SELECT id, station1Id, station2Id, lineId
@@ -79,6 +91,7 @@ const getAllSegments = () => {
   );
 };
 
+// Returns all possible random events
 const getAllEvents = () => {
   return all(
     `SELECT id, description, effect
@@ -87,6 +100,7 @@ const getAllEvents = () => {
   );
 };
 
+// Returns safe user data by id, without password or salt
 const getUserById = (id) => {
   return get(
     `SELECT id, email, name
@@ -95,6 +109,13 @@ const getUserById = (id) => {
     [id]
   );
 };
+
+
+// ===============================
+// Authentication DAO functions
+// ===============================
+
+// Checks user email/password using the stored salt and hashed password
 export const getUser = (email, password) => {
   return new Promise((resolve, reject) => {
     const sql = "SELECT * FROM user WHERE email = ?";
@@ -129,6 +150,12 @@ export const getUser = (email, password) => {
     });
   });
 };
+
+
+// ===============================
+// Shared exports
+// ===============================
+
 export {
   get,
   all,
@@ -140,8 +167,12 @@ export {
   getUserById,
 };
 
-// SECTION 5 - Full network, planning network, game creation, and ranking
 
+// ===============================
+// Network, game creation, and ranking DAO functions
+// ===============================
+
+// Returns the full network with lines and colors for the setup phase
 export const getFullNetwork = async () => {
   const stations = await all(
     `SELECT id, name, x, y
@@ -177,6 +208,7 @@ export const getFullNetwork = async () => {
   };
 };
 
+// Returns the lines that pass through a specific station
 export const getStationLines = async (stationId) => {
   return await all(
     `SELECT lineId
@@ -186,12 +218,14 @@ export const getStationLines = async (stationId) => {
     [stationId]
   );
 };
-//helper function: Check whether a station belongs to at least two lines.
+
+// Checks whether a station belongs to at least two lines
 export const isInterchangeStation = async (stationId) => {
   const stationLines = await getStationLines(stationId);
   return stationLines.length >= 2;
 };
-//Compute the shortest distance between two stations using the segment graph computes the segments/edges
+
+// Computes the shortest distance between two stations using the segment graph
 export const computeShortestDistance = async (startStationId, destinationStationId) => {
   if (startStationId === destinationStationId) {
     return 0;
@@ -246,7 +280,8 @@ export const computeShortestDistance = async (startStationId, destinationStation
 
   return null;
 };
-//choose a valid random start and destination pair. frontend is nevver allowed to choose only server
+
+// Chooses a valid random start/destination pair on the server side
 export const chooseRandomStartDestination = async () => {
   const stations = await all(
     `SELECT id
@@ -284,6 +319,7 @@ export const chooseRandomStartDestination = async () => {
   return possiblePairs[randomIndex];
 };
 
+// Creates a new planning game for the logged-in user
 export const createGame = async (userId) => {
   const pair = await chooseRandomStartDestination();
 
@@ -317,6 +353,7 @@ export const createGame = async (userId) => {
   return await getGameById(result.id, userId);
 };
 
+// Returns a game only if it belongs to the logged-in user
 export const getGameById = async (gameId, userId) => {
   return await get(
     `SELECT g.id,
@@ -339,6 +376,7 @@ export const getGameById = async (gameId, userId) => {
   );
 };
 
+// Returns planning data without exposing line names, colors, or line ids
 export const getPlanningNetwork = async (gameId, userId) => {
   const game = await getGameById(gameId, userId);
 
@@ -365,6 +403,7 @@ export const getPlanningNetwork = async (gameId, userId) => {
   };
 };
 
+// Returns the best completed score for each user
 export const getRanking = async () => {
   return await all(
     `SELECT u.id AS userId,
@@ -380,10 +419,12 @@ export const getRanking = async () => {
   );
 };
 
+
 // ===============================
-// Section 6 - Route validation and execution
+// Route validation and execution DAO functions
 // ===============================
 
+// Returns one segment by id
 async function getSegmentById(segmentId) {
   return get(
     `SELECT id, station1Id, station2Id, lineId
@@ -393,6 +434,7 @@ async function getSegmentById(segmentId) {
   );
 }
 
+// Selects one random event from the event table
 async function getRandomEvent() {
   return get(
     `SELECT id, description, effect
@@ -402,6 +444,7 @@ async function getRandomEvent() {
   );
 }
 
+// Validates the submitted segment route without executing it
 export async function validateRoute(game, segmentIds) {
   if (!Array.isArray(segmentIds)) {
     return {
@@ -516,6 +559,7 @@ export async function validateRoute(game, segmentIds) {
   };
 }
 
+// Executes a valid route by applying one random event per segment
 export async function executeValidRoute(gameId, reconstructedSteps) {
   let coins = 20;
   const executedSteps = [];
@@ -568,6 +612,7 @@ export async function executeValidRoute(gameId, reconstructedSteps) {
   };
 }
 
+// Submits a route, validates it, updates the game, and stores execution steps if valid
 export async function submitRoute(gameId, userId, segmentIds) {
   const game = await getGameById(gameId, userId);
 
@@ -645,6 +690,7 @@ export async function submitRoute(gameId, userId, segmentIds) {
   }
 }
 
+// Returns stored execution steps for a game belonging to the logged-in user
 export async function getGameSteps(gameId, userId) {
   return all(
     `SELECT

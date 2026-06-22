@@ -188,4 +188,4 @@ All the following APIs are protected and require login.
 
 ## Use of AI Tools
 
-I used ChatGPT as an assistant and debugger during the project. It helped me split the work into sections, keep track of what I had already completed, and plan what still needed to be done. After finishing each section, I updated an MD file with the completed work, files changed, tests done, and next steps, so the project could continue in an organized way. ChatGPT also helped me debug code, understand errors, think of possible test cases, and check edge cases.
+I used ChatGPT as an assistant and debugger during the project. It helped me split the work into sections, keep track of what I had already completed, and plan what still needed to be done. After finishing each section, I updated an MD file with the completed work, files changed, tests done, and next steps, so the project could continue in an organized way. ChatGPT also helped me debug code, understand errors, think of possible test cases, and check edge cases. All AI suggestions were reviewed, adapted when needed, and verified manually by running the application, testing the APIs, and checking the browser flow.

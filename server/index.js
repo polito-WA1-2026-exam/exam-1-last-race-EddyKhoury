@@ -1,10 +1,13 @@
-// imports
-import express from "express"; // used to create the server
-import morgan from "morgan"; //used for logs request
-import cors from "cors"; //allows frontend/backend communication
-import passport from "passport"; // authentication framework
-import LocalStrategy from "passport-local"; //email/password login strategy
-import session from "express-session";// session cookies
+// ===============================
+// Imports and dependencies
+// ===============================
+
+import express from "express"; // Used to create the server
+import morgan from "morgan"; // Logs HTTP requests in the terminal
+import cors from "cors"; // Allows frontend/backend communication
+import passport from "passport"; // Authentication framework
+import LocalStrategy from "passport-local"; // Email/password login strategy
+import session from "express-session"; // Session cookies
 
 import {
   getAllStations,
@@ -17,28 +20,45 @@ import {
   getGameById,
   getRanking,
   submitRoute,
-  getGameSteps
+  getGameSteps,
 } from "./dao.js";
 
 import { param, body, validationResult } from "express-validator";
-// init express
+
+
+// ===============================
+// Express app setup
+// ===============================
+
 const app = new express();
-const port = 3001; //backend listens at port = 3001
-
-//used for debugging. to be used to see API requests and status codes
-app.use(morgan("dev")); 
-app.use(express.json()); 
+const port = 3001; // Backend listens on port 3001
 
 
-//the React client runs on http://localhost:5173.
-// x the Express server runs on http://localhost:3001.
+// ===============================
+// Global middleware and CORS
+// ===============================
+
+// Logs requests and status codes during development
+app.use(morgan("dev"));
+
+// Allows the server to read JSON request bodies
+app.use(express.json());
+
+// The React client runs on http://localhost:5173.
+// The Express server runs on http://localhost:3001.
 const corsOptions = {
   origin: "http://localhost:5173",
-  credentials: true, //cookies are allowed between client and server
+  credentials: true, // Allows session cookies between client and server
 };
 
-app.use(cors(corsOptions)); //activates the cors configuration for all routes
+app.use(cors(corsOptions));
 
+
+// ===============================
+// Session and Passport setup
+// ===============================
+
+// Creates the server-side session used by Passport
 app.use(
   session({
     secret: "last-race-secret",
@@ -47,11 +67,18 @@ app.use(
   })
 );
 
+// Initializes Passport and enables login sessions
 app.use(passport.initialize());
 app.use(passport.session());
 
+
+// ===============================
+// Passport local authentication strategy
+// ===============================
+
 const localStrategy = LocalStrategy.Strategy;
-// function used to verify the user
+
+// Verifies user email and password during login
 passport.use(
   new localStrategy(
     {
@@ -75,11 +102,13 @@ passport.use(
     }
   )
 );
-// when login is successful Passport stores only the userID in the session and not the whole user Object
+
+// Stores only the user id in the session after login
 passport.serializeUser((user, done) => {
   done(null, user.id);
 });
-// later requests passport reads the userID from the session and reloads the user from the database
+
+// Reloads the safe user object from the database on later requests
 passport.deserializeUser(async (id, done) => {
   try {
     const user = await getUserById(id);
@@ -89,7 +118,12 @@ passport.deserializeUser(async (id, done) => {
   }
 });
 
-// Middleware used to protect APIs that require login
+
+// ===============================
+// Authentication and validation helpers
+// ===============================
+
+// Protects APIs that require a logged-in user
 const isLoggedIn = (req, res, next) => {
   if (req.isAuthenticated()) {
     return next();
@@ -97,7 +131,8 @@ const isLoggedIn = (req, res, next) => {
 
   return res.status(401).json({ error: "Not authenticated" });
 };
-//check express-validator results
+
+// Checks express-validator results and returns 422 for invalid input
 const handleValidationErrors = (req, res, next) => {
   const errors = validationResult(req);
 
@@ -107,8 +142,13 @@ const handleValidationErrors = (req, res, next) => {
 
   next();
 };
-// POST /api/sessions
-// Login
+
+
+// ===============================
+// Authentication APIs
+// ===============================
+
+// Logs in a user using email and password
 app.post("/api/sessions", (req, res, next) => {
   passport.authenticate("local", (err, user, info) => {
     if (err) {
@@ -131,30 +171,35 @@ app.post("/api/sessions", (req, res, next) => {
   })(req, res, next);
 });
 
-// GET /api/sessions/current
-// Check current logged-in user
-app.get("/api/sessions/current", isLoggedIn, (req, res) => {
-  res.status(200).json(req.user);
+// Returns the currently logged-in user
+app.get("/api/sessions/current", (req, res) => {
+  if (req.isAuthenticated()) {
+    return res.status(200).json(req.user);
+  }
+
+  return res.status(200).json(null);
 });
 
-// DELETE /api/sessions/current
-// Logout
+// Logs out the current user
 app.delete("/api/sessions/current", (req, res) => {
   req.logout(() => {
     res.status(200).json({ message: "Logged out" });
   });
 });
 
-//temporary test API. This confirms that the server is running and that the client will later be able to call /api/... endpoints
+
+// ===============================
+// Development and debug endpoints
+// ===============================
+
+// Development health check used to confirm that the Express server is running
 app.get("/api/test", (req, res) => {
   res.json({
     message: "Last Race server is running",
   });
 });
 
-
-// Temporary debug API for Section 3.
-// This confirms that dao.js can read stations from the SQLite database.
+// Temporary debug endpoint used to verify that dao.js can read stations from SQLite
 app.get("/api/debug/stations", async (req, res) => {
   try {
     const stations = await getAllStations();
@@ -165,8 +210,7 @@ app.get("/api/debug/stations", async (req, res) => {
   }
 });
 
-// Temporary debug API for Section 3.
-// This confirms that dao.js can read segments from the SQLite database.
+// Temporary debug endpoint used to verify that dao.js can read segments from SQLite
 app.get("/api/debug/segments", async (req, res) => {
   try {
     const segments = await getAllSegments();
@@ -177,8 +221,12 @@ app.get("/api/debug/segments", async (req, res) => {
   }
 });
 
-// SECTION 5 - Protected network and game creation APIs
 
+// ===============================
+// Network and game creation APIs
+// ===============================
+
+// Returns the full network for the setup phase
 app.get("/api/network/full", isLoggedIn, async (req, res) => {
   try {
     const network = await getFullNetwork();
@@ -189,6 +237,7 @@ app.get("/api/network/full", isLoggedIn, async (req, res) => {
   }
 });
 
+// Creates a new game for the logged-in user
 app.post("/api/games", isLoggedIn, async (req, res) => {
   try {
     const game = await createGame(req.user.id);
@@ -199,6 +248,7 @@ app.post("/api/games", isLoggedIn, async (req, res) => {
   }
 });
 
+// Returns planning-safe game data without line colors or line names
 app.get(
   "/api/games/:id/planning",
   isLoggedIn,
@@ -221,6 +271,7 @@ app.get(
   }
 );
 
+// Returns one game belonging to the logged-in user
 app.get(
   "/api/games/:id",
   isLoggedIn,
@@ -242,7 +293,13 @@ app.get(
     }
   }
 );
-// Submit a planned route and execute the game
+
+
+// ===============================
+// Route submission and execution APIs
+// ===============================
+
+// Submits the planned route, validates it, and executes the game if valid
 app.post(
   "/api/games/:id/route",
   isLoggedIn,
@@ -280,7 +337,7 @@ app.post(
   }
 );
 
-// Get execution steps for a completed game
+// Returns the execution steps of a completed valid game
 app.get(
   "/api/games/:id/steps",
   isLoggedIn,
@@ -308,6 +365,12 @@ app.get(
   }
 );
 
+
+// ===============================
+// Ranking API
+// ===============================
+
+// Returns the best completed score for each user
 app.get("/api/ranking", isLoggedIn, async (req, res) => {
   try {
     const ranking = await getRanking();
@@ -317,7 +380,13 @@ app.get("/api/ranking", isLoggedIn, async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 });
-// activate the server
+
+
+// ===============================
+// Server activation
+// ===============================
+
+// Starts the Express backend server
 app.listen(port, () => {
   console.log(`Server listening at http://localhost:${port}`);
 });

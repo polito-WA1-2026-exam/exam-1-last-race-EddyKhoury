@@ -37,7 +37,6 @@ DELETE http://localhost:3001/api/sessions/current
 ### Current session after logout
 GET http://localhost:3001/api/sessions/current
 
-### SECTION 5 TESTS
 
 ### 1. Anonymous user cannot fetch full network
 GET http://localhost:3001/api/network/full
@@ -63,12 +62,12 @@ POST http://localhost:3001/api/games
 
 ### 5. Logged-in user can get created game
 ### Replace 1 with the game id returned above
-GET http://localhost:3001/api/games/3
+GET http://localhost:3001/api/games/4
 
 
 ### 6. Logged-in user can get planning data
 ### Replace 1 with the game id returned above
-GET http://localhost:3001/api/games/3/planning
+GET http://localhost:3001/api/games/4/planning
 
 
 ### 7. Logged-in user can get ranking
@@ -87,9 +86,7 @@ DELETE http://localhost:3001/api/sessions/current
 GET http://localhost:3001/api/ranking
 
 
-### ===============================
-### Section 6 - Route validation and execution
-### ===============================
+
 
 ### Login with manuel
 POST http://localhost:3001/api/sessions
@@ -105,15 +102,15 @@ POST http://localhost:3001/api/games
 
 ### Get the created game
 ### Replace 3 with the new game id returned above
-GET http://localhost:3001/api/games/3
+GET http://localhost:3001/api/games/5
 
 ### Get planning data for the created game
 ### Replace 3 with the new game id returned above
-GET http://localhost:3001/api/games/4/planning
+GET http://localhost:3001/api/games/9/planning
 
 ### Submit invalid route - empty route
 ### Replace 3 with the new game id returned above
-POST http://localhost:3001/api/games/4/route
+POST http://localhost:3001/api/games/5/route
 Content-Type: application/json
 
 {
@@ -122,11 +119,11 @@ Content-Type: application/json
 
 ### Get game after invalid route
 ### finalScore should be 0
-GET http://localhost:3001/api/games/4
+GET http://localhost:3001/api/games/5
 
 ### Get steps after invalid route
 ### should return []
-GET http://localhost:3001/api/games/4/steps
+GET http://localhost:3001/api/games/5/steps
 
 ### Create another game for valid route testing
 POST http://localhost:3001/api/games
@@ -134,33 +131,33 @@ POST http://localhost:3001/api/games
 ### Submit valid route
 ### Replace 4 with the new game id.
 ### Replace the segment ids with a real valid route from planning data.
-POST http://localhost:3001/api/games/4/route
+POST http://localhost:3001/api/games/9/route
 Content-Type: application/json
 
 {
-  "segments": [18, 12, 3, 4]
+  "segments": [10, 16, 7]
 }
 
 ### Get game after valid route
 ### finalScore should be updated
-GET http://localhost:3001/api/games/8
+GET http://localhost:3001/api/games/9
 
 ### Get steps after valid route
 ### should return one game_step per submitted segment
-GET http://localhost:3001/api/games/8/steps
+GET http://localhost:3001/api/games/9/steps
 
 ### Try submitting the same completed game again
 ### should return 409 because game is no longer in planning
-POST http://localhost:3001/api/games/8/route
+POST http://localhost:3001/api/games/9/route
 Content-Type: application/json
 
 {
-  "segments": [18, 12, 3, 4]  
+  "segments": [10, 16, 7]
 }
 
 ### Invalid request body
 ### should return 422 because segments is not an array
-POST http://localhost:3001/api/games/8/route
+POST http://localhost:3001/api/games/9/route
 Content-Type: application/json
 
 {
@@ -179,7 +176,7 @@ Content-Type: application/json
 
 ### Final spec test - duplicate segment IDs are invalid
 ### Replace 9 with a fresh planning game id before running.
-POST http://localhost:3001/api/games/3/route
+POST http://localhost:3001/api/games/9/route
 Content-Type: application/json
 
 {
@@ -187,4 +184,4 @@ Content-Type: application/json
 }
 
 ### Check no steps were created after duplicate segment invalid route
-GET http://localhost:3001/api/games/3/steps
+GET http://localhost:3001/api/games/9/steps
